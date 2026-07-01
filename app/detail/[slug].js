@@ -3,7 +3,6 @@ import {
   ScrollView,
   View,
   Text,
-  Image,
   TouchableOpacity,
   StyleSheet,
   Linking,
@@ -11,100 +10,103 @@ import {
   Share,
   Platform,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { artworkBySlug } from '../../data/artworks';
-import { theme } from '../../data/theme';
+import { useTheme } from '../../data/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const blurhash = 'L6PZfSi_.AyE_3t7t7R**0o#DgR4';
 
 export default function ArtworkDetailScreen() {
   const { slug } = useLocalSearchParams();
   const artwork = artworkBySlug(slug);
+  const { colors } = useTheme();
 
   if (!artwork) {
     return (
-      <View style={styles.centered}>
-        <Ionicons name="image-outline" size={64} color={theme.colors.textTertiary} />
-        <Text style={styles.notFoundTitle}>Artwork not found</Text>
-        <Text style={styles.notFoundSubtitle}>The artwork you're looking for doesn't exist.</Text>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>Go Back</Text>
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <Ionicons name="image-outline" size={64} color={colors.textTertiary} />
+        <Text style={[styles.notFound, { color: colors.text }]}>Artwork not found</Text>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Text style={{ color: colors.blue, fontWeight: '600' }}>Go Back</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
   const handleARPress = () => {
+    if (Platform.OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const arUrl = `https://preview.jirihauschka.com/ar/${slug}`;
-    Linking.openURL(arUrl).catch((err) => {
-      console.warn('Could not open AR URL:', err);
-    });
+    Linking.openURL(arUrl).catch(() => {});
   };
 
   const handleShare = async () => {
+    if (Platform.OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       await Share.share({
         message: `${artwork.title} by Jiri Hauschka (${artwork.year})`,
         url: artwork.image,
       });
-    } catch (err) {
-      console.warn('Share failed:', err);
-    }
+    } catch {}
   };
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      {/* Image section */}
+      {/* Image with rounded bottom */}
       <View style={styles.imageWrapper}>
         <Image
           source={{ uri: artwork.image }}
           style={styles.image}
-          resizeMode="contain"
+          placeholder={{ blurhash }}
+          contentFit="contain"
+          transition={500}
+          cachePolicy="memory-disk"
         />
-        <TouchableOpacity style={styles.shareBtn} onPress={handleShare} activeOpacity={0.7}>
-          <Ionicons name="share-outline" size={22} color={theme.colors.text} />
+        <TouchableOpacity style={[styles.shareBtn, { backgroundColor: colors.card }]} onPress={handleShare} activeOpacity={0.7}>
+          <Ionicons name="share-outline" size={20} color={colors.text} />
         </TouchableOpacity>
       </View>
 
-      {/* Detail section — iOS grouped card style */}
-      <View style={styles.section}>
-        <View style={styles.row}>
-          <Text style={styles.title}>{artwork.title}</Text>
-        </View>
-        <View style={styles.divider} />
-        <View style={styles.row}>
-          <Text style={styles.label}>Year</Text>
-          <Text style={styles.value}>{artwork.year}</Text>
-        </View>
-        {artwork.medium ? (
-          <>
-            <View style={styles.divider} />
-            <View style={styles.row}>
-              <Text style={styles.label}>Medium</Text>
-              <Text style={styles.value}>{artwork.medium}</Text>
-            </View>
-          </>
-        ) : null}
+      {/* Detail Section - Glass card */}
+      <View style={[styles.section, { backgroundColor: colors.card }]}>
+        <Text style={[styles.title, { color: colors.text }]}>{artwork.title}</Text>
         {artwork.size ? (
-          <>
-            <View style={styles.divider} />
-            <View style={styles.row}>
-              <Text style={styles.label}>Size</Text>
-              <Text style={styles.value}>{artwork.size}</Text>
-            </View>
-          </>
+          <Text style={[styles.size, { color: colors.textTertiary }]}>{artwork.size}</Text>
         ) : null}
+        <View style={[styles.divider, { backgroundColor: colors.separator }]} />
+        {artwork.medium ? (
+          <View style={styles.row}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Medium</Text>
+            <Text style={[styles.value, { color: colors.text }]}>{artwork.medium}</Text>
+          </View>
+        ) : null}
+        <View style={styles.row}>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>Year</Text>
+          <Text style={[styles.value, { color: colors.text }]}>{artwork.year}</Text>
+        </View>
       </View>
 
-      {/* AR button */}
-      <TouchableOpacity style={styles.arButton} onPress={handleARPress} activeOpacity={0.8}>
-        <Ionicons name="cube-outline" size={22} color="#FFF" style={{ marginRight: 8 }} />
-        <Text style={styles.arButtonText}>View on your wall</Text>
+      {/* AR Button - Premium style */}
+      <TouchableOpacity
+        style={[styles.arButton, { backgroundColor: colors.black }]}
+        onPress={handleARPress}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="cube" size={20} color={colors.white} style={{ marginRight: 10 }} />
+        <Text style={[styles.arText, { color: colors.white }]}>View on your wall</Text>
       </TouchableOpacity>
+
+      {/* Info note */}
+      <Text style={[styles.arNote, { color: colors.textTertiary }]}>
+        Opens AR Quick Look to preview this artwork in your space at real scale.
+      </Text>
 
       <View style={{ height: 40 }} />
     </ScrollView>
@@ -112,138 +114,111 @@ export default function ArtworkDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.bg,
-  },
-  content: {
-    paddingBottom: 40,
-  },
+  container: { flex: 1 },
+  content: { paddingBottom: 40 },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.colors.bg,
     paddingHorizontal: 32,
   },
-  notFoundTitle: {
-    fontSize: theme.fontSize.title,
-    fontWeight: theme.weight.semibold,
-    color: theme.colors.text,
+  notFound: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginTop: 12,
+  },
+  backBtn: {
     marginTop: 16,
-  },
-  notFoundSubtitle: {
-    fontSize: theme.fontSize.subhead,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 20,
-  },
-  backButton: {
-    marginTop: 20,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.radius.md,
-    borderWidth: 0.5,
-    borderColor: theme.colors.separator,
-  },
-  backButtonText: {
-    fontSize: theme.fontSize.body,
-    fontWeight: theme.weight.medium,
-    color: theme.colors.accent,
   },
   imageWrapper: {
-    backgroundColor: theme.colors.card,
-    paddingVertical: 20,
+    backgroundColor: 'transparent',
   },
   image: {
     width: SCREEN_WIDTH,
-    height: SCREEN_WIDTH * 1.0,
+    height: SCREEN_WIDTH * 1.1,
   },
   shareBtn: {
     position: 'absolute',
-    top: 8,
-    right: 12,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: theme.colors.card,
+    top: 12,
+    right: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     justifyContent: 'center',
     alignItems: 'center',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
+        shadowOpacity: 0.15,
         shadowRadius: 8,
       },
-      default: {
-        elevation: 2,
-      },
+      default: { elevation: 3 },
     }),
   },
   section: {
     marginHorizontal: 16,
-    marginTop: 16,
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.radius.md,
-    overflow: 'hidden',
+    marginTop: -20,
+    borderRadius: 16,
+    padding: 20,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
       },
-      default: {
-        elevation: 1,
-      },
+      default: { elevation: 2 },
     }),
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    lineHeight: 30,
+  },
+  size: {
+    fontSize: 14,
+    marginTop: 4,
+    fontWeight: '400',
+  },
+  divider: {
+    height: 0.5,
+    marginVertical: 14,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  title: {
-    fontSize: theme.fontSize.title,
-    fontWeight: theme.weight.semibold,
-    color: theme.colors.text,
-    flex: 1,
+    paddingVertical: 6,
   },
   label: {
-    fontSize: theme.fontSize.subhead,
-    color: theme.colors.textSecondary,
+    fontSize: 15,
+    fontWeight: '400',
   },
   value: {
-    fontSize: theme.fontSize.subhead,
-    fontWeight: theme.weight.medium,
-    color: theme.colors.text,
-    textAlign: 'right',
-    flex: 1,
-    marginLeft: 16,
-  },
-  divider: {
-    height: 0.5,
-    backgroundColor: theme.colors.separator,
-    marginLeft: 16,
+    fontSize: 15,
+    fontWeight: '600',
   },
   arButton: {
     flexDirection: 'row',
     marginHorizontal: 16,
     marginTop: 20,
-    backgroundColor: theme.colors.black,
-    paddingVertical: 16,
-    borderRadius: theme.radius.md,
+    paddingVertical: 18,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  arButtonText: {
-    color: '#FFFFFF',
-    fontSize: theme.fontSize.body,
-    fontWeight: theme.weight.semibold,
+  arText: {
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  arNote: {
+    textAlign: 'center',
+    fontSize: 12,
+    marginTop: 10,
+    marginHorizontal: 32,
+    lineHeight: 16,
   },
 });
