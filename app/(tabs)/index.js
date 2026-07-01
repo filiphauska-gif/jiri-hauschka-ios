@@ -193,7 +193,7 @@ export default function GalleryScreen() {
 
   const handleScroll = RNAnimated.event(
     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-    { useNativeDriver: true }
+    { useNativeDriver: false }
   );
 
   const scrollEndHandler = useCallback(
