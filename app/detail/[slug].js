@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Linking,
   Dimensions,
   Share,
   Platform,
@@ -13,10 +12,9 @@ import {
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
+import * as WebBrowser from 'expo-web-browser';
 import { artworkBySlug } from '../../data/artworks';
-import { useTheme, Fonts } from '../../data/theme';
+import { useTheme } from '../../data/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_HEIGHT = SCREEN_WIDTH * 1.0;
@@ -40,21 +38,13 @@ export default function ArtworkDetailScreen() {
     );
   }
 
-  // Native AR: download USDZ locally, then share → Quick Look
+  // AR: otevřít v in-app browseru (SFSafariViewController)
   const handleARPress = async () => {
     if (Platform.OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      const usdzUrl = `https://preview.jirihauschka.com${artwork.usdz}`;
-      const localUri = `${FileSystem.cacheDirectory}${artwork.slug}.usdz`;
-      const { uri } = await FileSystem.downloadAsync(usdzUrl, localUri);
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, { UTI: 'model/usd' });
-      } else {
-        Linking.openURL(uri).catch(() => {});
-      }
+      await WebBrowser.openBrowserAsync(`https://preview.jirihauschka.com/ar/${slug}`);
     } catch (err) {
-      // Fallback: direct URL
-      Linking.openURL(`https://preview.jirihauschka.com${artwork.usdz}`).catch(() => {});
+      console.warn('AR failed:', err);
     }
   };
 
@@ -88,7 +78,7 @@ export default function ArtworkDetailScreen() {
 
       {/* Info */}
       <View style={[styles.section, { backgroundColor: colors.card, borderRadius: radius.lg }]}>
-        <Text style={[styles.title, { color: colors.text, fontFamily: Fonts.serif }]}>{artwork.title}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{artwork.title}</Text>
         {artwork.size ? <Text style={[styles.size, { color: colors.textTertiary }]}>{artwork.size}</Text> : null}
         <View style={[styles.divider, { backgroundColor: colors.separator }]} />
         <View style={styles.infoGrid}>

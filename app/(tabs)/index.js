@@ -13,7 +13,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { useTheme, Fonts } from '../../data/theme';
+import { useTheme } from '../../data/theme';
 import { artworks } from '../../data/artworks';
 
 const INITIAL_COUNT = 12;
@@ -119,10 +119,10 @@ export default function GalleryScreen() {
       <Image source={{ uri: artworks[0]?.image }} style={StyleSheet.absoluteFill} contentFit="cover" />
       <View style={[styles.heroOverlay, { backgroundColor: colors.heroOverlay }]} />
       <View style={styles.heroContent}>
-        <Text style={[styles.heroTitle, { fontFamily: Fonts.serif }]}>Jiri{'\n'}Hauschka</Text>
+        <Text style={[styles.heroTitle, { fontFamily: 'System' }]}>Jiri{'\n'}Hauschka</Text>
         <Text style={styles.heroSub}>Paintings between abstraction,{'\n'}figuration & magical realism.</Text>
         <View style={styles.heroMeta}>
-          <View style={[styles.heroBadge, { backgroundColor: colors.accent }]}>
+          <View style={[styles.heroBadge, { backgroundColor: colors.heroBadge }]}>
             <Text style={styles.heroBadgeText}>{artworks.length} works</Text>
           </View>
         </View>
