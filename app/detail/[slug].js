@@ -11,12 +11,19 @@ import {
   Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { artworkBySlug } from '../../data/artworks';
 import { useTheme, Fonts } from '../../data/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const IMAGE_HEIGHT = SCREEN_WIDTH * 1.1;
 
 const blurhash = 'L6PZfSi_.AyE_3t7t7R**0o#DgR4';
 
@@ -25,6 +32,65 @@ export default function ArtworkDetailScreen() {
   const artwork = artworkBySlug(slug);
   const { colors } = useTheme();
 
+  // Pinch-to-zoom
+  const scale = useSharedValue(1);
+  const savedScale = useSharedValue(1);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const savedTranslateX = useSharedValue(0);
+  const savedTranslateY = useSharedValue(0);
+
+  const pinchGesture = Gesture.Pinch()
+    .onStart(() => {
+      savedScale.value = scale.value;
+    })
+    .onUpdate((e) => {
+      scale.value = Math.min(Math.max(savedScale.value * e.scale, 1), 4);
+    })
+    .onEnd(() => {
+      if (scale.value < 1) {
+        scale.value = withTiming(1, { duration: 200 });
+        translateX.value = withTiming(0, { duration: 200 });
+        translateY.value = withTiming(0, { duration: 200 });
+      }
+    });
+
+  const doubleTapGesture = Gesture.Tap()
+    .numberOfTaps(2)
+    .onEnd(() => {
+      if (scale.value > 1) {
+        scale.value = withTiming(1, { duration: 200 });
+        translateX.value = withTiming(0, { duration: 200 });
+        translateY.value = withTiming(0, { duration: 200 });
+      } else {
+        scale.value = withTiming(2.5, { duration: 200 });
+      }
+    });
+
+  const panGesture = Gesture.Pan()
+    .onStart(() => {
+      savedTranslateX.value = translateX.value;
+      savedTranslateY.value = translateY.value;
+    })
+    .onUpdate((e) => {
+      if (scale.value > 1) {
+        translateX.value = savedTranslateX.value + e.translationX;
+        translateY.value = savedTranslateY.value + e.translationY;
+      }
+    })
+    .minPointers(2);
+
+  const composedGesture = Gesture.Simultaneous(pinchGesture, panGesture);
+
+  const imageAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: scale.value },
+    ],
+  }));
+
+  // Fallback
   if (!artwork) {
     return (
       <View style={[styles.centered, { backgroundColor: colors.background }]}>
@@ -39,8 +105,7 @@ export default function ArtworkDetailScreen() {
 
   const handleARPress = () => {
     if (Platform.OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const arUrl = `https://preview.jirihauschka.com/ar/${slug}`;
-    Linking.openURL(arUrl).catch(() => {});
+    Linking.openURL(`https://preview.jirihauschka.com/ar/${slug}`).catch(() => {});
   };
 
   const handleShare = async () => {
@@ -59,41 +124,57 @@ export default function ArtworkDetailScreen() {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      {/* Image with rounded bottom */}
-      <View style={styles.imageWrapper}>
-        <Image
-          source={{ uri: artwork.image }}
-          style={styles.image}
-          placeholder={{ blurhash }}
-          contentFit="contain"
-          transition={500}
-          cachePolicy="memory-disk"
-        />
-        <TouchableOpacity style={[styles.shareBtn, { backgroundColor: colors.card }]} onPress={handleShare} activeOpacity={0.7}>
-          <Ionicons name="share-outline" size={20} color={colors.text} />
-        </TouchableOpacity>
-      </View>
+      {/* Zoomable image */}
+      <GestureDetector gesture={composedGesture}>
+        <Animated.View style={[styles.imageWrapper, imageAnimatedStyle]}>
+          <Image
+            source={{ uri: artwork.image }}
+            style={styles.image}
+            placeholder={{ blurhash }}
+            contentFit="contain"
+            transition={500}
+            cachePolicy="memory-disk"
+          />
+        </Animated.View>
+      </GestureDetector>
+      <TouchableOpacity
+        style={[styles.shareBtn, { backgroundColor: colors.card }]}
+        onPress={handleShare}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="share-outline" size={20} color={colors.text} />
+      </TouchableOpacity>
 
-      {/* Detail Section - Glass card */}
+      {/* Hint */}
+      <Text style={[styles.zoomHint, { color: colors.textTertiary }]}>
+        Pinch to zoom · Double tap to zoom in/out
+      </Text>
+
+      {/* Detail card */}
       <View style={[styles.section, { backgroundColor: colors.card }]}>
-        <Text style={[styles.title, { color: colors.text, fontFamily: Fonts.serif }]}>{artwork.title}</Text>
+        <Text style={[styles.title, { color: colors.text, fontFamily: Fonts.serif }]}>
+          {artwork.title}
+        </Text>
         {artwork.size ? (
           <Text style={[styles.size, { color: colors.textTertiary }]}>{artwork.size}</Text>
         ) : null}
         <View style={[styles.divider, { backgroundColor: colors.separator }]} />
-        {artwork.medium ? (
-          <View style={styles.row}>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>Medium</Text>
-            <Text style={[styles.value, { color: colors.text }]}>{artwork.medium}</Text>
-          </View>
-        ) : null}
         <View style={styles.row}>
           <Text style={[styles.label, { color: colors.textSecondary }]}>Year</Text>
           <Text style={[styles.value, { color: colors.text }]}>{artwork.year}</Text>
         </View>
+        {artwork.medium ? (
+          <>
+            <View style={[styles.divider, { backgroundColor: colors.separator }]} />
+            <View style={styles.row}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Medium</Text>
+              <Text style={[styles.value, { color: colors.text }]}>{artwork.medium}</Text>
+            </View>
+          </>
+        ) : null}
       </View>
 
-      {/* AR Button - Premium style */}
+      {/* AR button */}
       <TouchableOpacity
         style={[styles.arButton, { backgroundColor: colors.black }]}
         onPress={handleARPress}
@@ -102,10 +183,8 @@ export default function ArtworkDetailScreen() {
         <Ionicons name="cube" size={20} color={colors.white} style={{ marginRight: 10 }} />
         <Text style={[styles.arText, { color: colors.white }]}>View on your wall</Text>
       </TouchableOpacity>
-
-      {/* Info note */}
       <Text style={[styles.arNote, { color: colors.textTertiary }]}>
-        Opens AR Quick Look to preview this artwork in your space at real scale.
+        Opens AR Quick Look to preview this artwork at real scale.
       </Text>
 
       <View style={{ height: 40 }} />
@@ -122,22 +201,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
   },
-  notFound: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginTop: 12,
-  },
-  backBtn: {
-    marginTop: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-  },
+  notFound: { fontSize: 20, fontWeight: '600', marginTop: 12 },
+  backBtn: { marginTop: 16, paddingVertical: 10, paddingHorizontal: 20 },
   imageWrapper: {
-    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: IMAGE_HEIGHT,
   },
   image: {
     width: SCREEN_WIDTH,
-    height: SCREEN_WIDTH * 1.1,
+    height: IMAGE_HEIGHT,
+  },
+  zoomHint: {
+    textAlign: 'center',
+    fontSize: 11,
+    marginTop: -4,
+    marginBottom: 4,
   },
   shareBtn: {
     position: 'absolute',
@@ -160,7 +239,7 @@ const styles = StyleSheet.create({
   },
   section: {
     marginHorizontal: 16,
-    marginTop: -20,
+    marginTop: 16,
     borderRadius: 16,
     padding: 20,
     ...Platform.select({
@@ -173,52 +252,16 @@ const styles = StyleSheet.create({
       default: { elevation: 2 },
     }),
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    lineHeight: 30,
-  },
-  size: {
-    fontSize: 14,
-    marginTop: 4,
-    fontWeight: '400',
-  },
-  divider: {
-    height: 0.5,
-    marginVertical: 14,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 6,
-  },
-  label: {
-    fontSize: 15,
-    fontWeight: '400',
-  },
-  value: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
+  title: { fontSize: 24, fontWeight: '700', lineHeight: 30 },
+  size: { fontSize: 14, marginTop: 4, fontWeight: '400' },
+  divider: { height: 0.5, marginVertical: 14 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
+  label: { fontSize: 15, fontWeight: '400' },
+  value: { fontSize: 15, fontWeight: '600' },
   arButton: {
-    flexDirection: 'row',
-    marginHorizontal: 16,
-    marginTop: 20,
-    paddingVertical: 18,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: 'row', marginHorizontal: 16, marginTop: 20,
+    paddingVertical: 18, borderRadius: 14, justifyContent: 'center', alignItems: 'center',
   },
-  arText: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  arNote: {
-    textAlign: 'center',
-    fontSize: 12,
-    marginTop: 10,
-    marginHorizontal: 32,
-    lineHeight: 16,
-  },
+  arText: { fontSize: 17, fontWeight: '600' },
+  arNote: { textAlign: 'center', fontSize: 12, marginTop: 10, marginHorizontal: 32, lineHeight: 16 },
 });
