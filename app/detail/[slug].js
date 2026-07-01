@@ -108,7 +108,7 @@ export default function ArtworkDetailScreen() {
         AR Quick Look — see this artwork at real scale in your space.
       </Text>
 
-      <View style={{ height: 40 }} />
+      <View style={{ height: 120 }} />
     </ScrollView>
   );
 }

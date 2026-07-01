@@ -1,4 +1,4 @@
-import { Platform, useColorScheme } from 'react-native';
+import { Platform } from 'react-native';
 
 // System font — stejný jako web
 const systemFont = Platform.select({
@@ -60,8 +60,7 @@ export const Colors = {
 };
 
 export function useTheme() {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme ?? 'light'];
+  const colors = Colors.light;
   return {
     colors,
     fonts: { sans: systemFont, serif: systemFont, mono: 'Menlo' },

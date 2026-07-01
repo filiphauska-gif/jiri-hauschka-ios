@@ -9,7 +9,7 @@ import {
   Animated as RNAnimated,
   Platform,
 } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -49,8 +49,8 @@ function ArtworkCard({ item, onPress, imageWidth, index }) {
 
   return (
     <Animated.View
-      entering={FadeInDown.delay((index % 10) * 50).duration(400).springify()}
-      style={{ width: imageWidth, marginBottom: CARD_GAP }}
+      entering={FadeInDown.delay((index % 10) * 60).springify().stiffness(100)}
+      style={[styles.cardOuter, { width: imageWidth, marginBottom: CARD_GAP }]}
     >
       <TouchableOpacity
         activeOpacity={0.85}
@@ -186,9 +186,12 @@ const styles = StyleSheet.create({
   heroMeta: { flexDirection: 'row', marginTop: 16 },
   heroBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
   heroBadgeText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600' },
+  cardOuter: {
+    // wrapper for animated entrance
+  },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: 'hidden',
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8 },

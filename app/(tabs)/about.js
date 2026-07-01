@@ -60,7 +60,8 @@ export default function AboutScreen() {
         <LinkRow icon="logo-instagram" text="@jirihauschka" color={colors.accent} onPress={() => Linking.openURL('https://instagram.com/jirihauschka')} />
       </View>
 
-      <View style={{ height: 40 }} />
+      {/* Extra space pro tab bar */}
+      <View style={{ height: 120 }} />
     </ScrollView>
   );
 }
