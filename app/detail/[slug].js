@@ -13,6 +13,7 @@ import {
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as FileSystem from 'expo-file-system';
 import { artworkBySlug } from '../../data/artworks';
 import { useTheme, Fonts } from '../../data/theme';
 
@@ -38,11 +39,21 @@ export default function ArtworkDetailScreen() {
     );
   }
 
-  // Native AR: open USDZ directly — iOS Quick Look handles it natively
-  const handleARPress = () => {
+  // Native AR: download USDZ locally, then open with Quick Look
+  const handleARPress = async () => {
     if (Platform.OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const usdzUrl = `https://preview.jirihauschka.com${artwork.usdz}`;
-    Linking.openURL(usdzUrl).catch(() => {});
+    try {
+      const usdzUrl = `https://preview.jirihauschka.com${artwork.usdz}`;
+      const localUri = `${FileSystem.cacheDirectory}${artwork.slug}.usdz`;
+      const download = await FileSystem.downloadAsync(usdzUrl, localUri);
+      if (download.uri) {
+        await Linking.openURL(download.uri);
+      }
+    } catch (err) {
+      // Fallback: try opening directly
+      const usdzUrl = `https://preview.jirihauschka.com${artwork.usdz}`;
+      Linking.openURL(usdzUrl).catch(() => {});
+    }
   };
 
   const handleShare = async () => {
