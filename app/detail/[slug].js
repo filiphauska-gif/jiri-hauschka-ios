@@ -14,7 +14,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { artworkBySlug } from '../../data/artworks';
-import { useTheme } from '../../data/theme';
+import { useTheme, Fonts } from '../../data/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -76,7 +76,7 @@ export default function ArtworkDetailScreen() {
 
       {/* Detail Section - Glass card */}
       <View style={[styles.section, { backgroundColor: colors.card }]}>
-        <Text style={[styles.title, { color: colors.text }]}>{artwork.title}</Text>
+        <Text style={[styles.title, { color: colors.text, fontFamily: Fonts.serif }]}>{artwork.title}</Text>
         {artwork.size ? (
           <Text style={[styles.size, { color: colors.textTertiary }]}>{artwork.size}</Text>
         ) : null}

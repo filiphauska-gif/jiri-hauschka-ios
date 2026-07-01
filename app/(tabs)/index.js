@@ -9,10 +9,11 @@ import {
   Animated as RNAnimated,
   Platform,
 } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { useTheme } from '../../data/theme';
+import { useTheme, Fonts } from '../../data/theme';
 import { artworks } from '../../data/artworks';
 
 const INITIAL_COUNT = 12;
@@ -61,40 +62,44 @@ function SkeletonBlock({ width, height, style, colors }) {
   );
 }
 
-function ArtworkCard({ item, onPress, imageWidth }) {
+function ArtworkCard({ item, onPress, imageWidth, index }) {
   const [loaded, setLoaded] = useState(false);
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={() => onPress(item.slug)}
-      onLongPress={() => {
-        if (Platform.OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      }}
-      style={{ width: imageWidth, marginBottom: 1 }}
+    <Animated.View
+      entering={FadeInDown.delay((index % 10) * 50).duration(400).springify()}
     >
-      <View style={styles.card}>
-        <View style={styles.imageWrap}>
-          {!loaded && (
-            <SkeletonBlock width={imageWidth} height={imageWidth} colors={colorsRef} />
-          )}
-          <Image
-            source={{ uri: item.image }}
-            style={[styles.image, { height: imageWidth }]}
-            placeholder={{ blurhash }}
-            contentFit="cover"
-            transition={400}
-            onLoad={() => setLoaded(true)}
-          />
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => onPress(item.slug)}
+        onLongPress={() => {
+          if (Platform.OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        }}
+        style={{ width: imageWidth, marginBottom: 1 }}
+      >
+        <View style={styles.card}>
+          <View style={styles.imageWrap}>
+            {!loaded && (
+              <SkeletonBlock width={imageWidth} height={imageWidth} colors={colorsRef} />
+            )}
+            <Image
+              source={{ uri: item.image }}
+              style={[styles.image, { height: imageWidth }]}
+              placeholder={{ blurhash }}
+              contentFit="cover"
+              transition={400}
+              onLoad={() => setLoaded(true)}
+            />
+          </View>
+          <View style={styles.meta}>
+            <Text style={styles.title} numberOfLines={1}>
+              {item.title}
+            </Text>
+            <Text style={styles.year}>{item.year}</Text>
+          </View>
         </View>
-        <View style={styles.meta}>
-          <Text style={styles.title} numberOfLines={1}>
-            {item.title}
-          </Text>
-          <Text style={styles.year}>{item.year}</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 
@@ -146,7 +151,7 @@ export default function GalleryScreen() {
   });
 
   const renderItem = useCallback(
-    ({ item }) => <ArtworkCard item={item} onPress={handlePress} imageWidth={imageWidth} />,
+    ({ item, index }) => <ArtworkCard item={item} onPress={handlePress} imageWidth={imageWidth} index={index} />,
     [imageWidth, handlePress]
   );
 
@@ -178,7 +183,7 @@ export default function GalleryScreen() {
         />
         <View style={[styles.heroOverlay, { backgroundColor: colors.overlay }]} />
         <View style={styles.heroContent}>
-          <Text style={styles.heroTitle}>Jiri{'\n'}Hauschka</Text>
+          <Text style={[styles.heroTitle, { fontFamily: Fonts.serif }]}>Jiri{'\n'}Hauschka</Text>
           <Text style={styles.heroSub}>Paintings between abstraction,{'\n'}figuration & magical realism.</Text>
         </View>
       </RNAnimated.View>

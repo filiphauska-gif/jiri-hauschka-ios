@@ -18,6 +18,8 @@ export const Fonts = Platform.select({
 
 const tintLight = '#1A1A1A';
 const tintDark = '#FFFFFF';
+const accentLight = '#8B7355';      // Muted gold/warm
+const accentDark = '#D4C5A9';        // Lighter warm for dark mode
 
 export const Colors = {
   light: {
@@ -29,6 +31,7 @@ export const Colors = {
     cardBorder: '#E5E5EA',
     separator: '#C6C6C8',
     tint: tintLight,
+    accent: accentLight,
     tabBar: 'rgba(255, 255, 255, 0.85)',
     tabBarBorder: 'rgba(0, 0, 0, 0.1)',
     tabIconDefault: '#8E8E93',
@@ -49,6 +52,7 @@ export const Colors = {
     cardBorder: '#38383A',
     separator: '#38383A',
     tint: tintDark,
+    accent: accentDark,
     tabBar: 'rgba(0, 0, 0, 0.85)',
     tabBarBorder: 'rgba(255, 255, 255, 0.15)',
     tabIconDefault: '#636366',
@@ -67,6 +71,7 @@ export function useAppTheme() {
   const colors = Colors[scheme ?? 'light'];
   return {
     colors,
+    fonts: Fonts,
     spacing: { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 },
     fontSize: {
       caption: 12,
@@ -74,7 +79,7 @@ export function useAppTheme() {
       body: 17,
       title: 22,
       largeTitle: 28,
-      hero: 34,
+      hero: 36,
     },
     weight: {
       regular: '400',

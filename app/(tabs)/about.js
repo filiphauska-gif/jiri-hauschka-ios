@@ -8,7 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../data/theme';
+import { useTheme, Fonts } from '../../data/theme';
 
 const facts = [
   { label: 'Born', value: '1965, Šumperk' },
@@ -39,7 +39,7 @@ export default function AboutScreen() {
       {/* Bio Card */}
       <View style={[styles.card, { backgroundColor: colors.card, borderRadius: radius.lg }]}>
         <Text style={styles.emoji}>🎨</Text>
-        <Text style={[styles.heading, { color: colors.text }]}>Biography</Text>
+        <Text style={[styles.heading, { color: colors.text, fontFamily: Fonts.serif }]}>Biography</Text>
         <Text style={[styles.body, { color: colors.textSecondary }]}>
           Born in Šumperk, Jiri Hauschka lives and works in Prague. His paintings are held
           in the National Gallery Prague and private collections internationally.
@@ -65,7 +65,7 @@ export default function AboutScreen() {
 
       {/* Contact */}
       <View style={[styles.card, { backgroundColor: colors.card, borderRadius: radius.lg }]}>
-        <Text style={[styles.heading, { color: colors.text }]}>Contact</Text>
+        <Text style={[styles.heading, { color: colors.text, fontFamily: Fonts.serif }]}>Contact</Text>
         <Text style={[styles.body, { color: colors.textTertiary, marginBottom: 16 }]}>
           For sales, exhibitions and enquiries.
         </Text>
