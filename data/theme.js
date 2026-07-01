@@ -66,7 +66,7 @@ export const Colors = {
   },
 };
 
-export function useAppTheme() {
+export function useTheme() {
   const scheme = useColorScheme();
   const colors = Colors[scheme ?? 'light'];
   return {
