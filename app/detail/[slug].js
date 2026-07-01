@@ -14,6 +14,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { artworkBySlug } from '../../data/artworks';
 import { useTheme, Fonts } from '../../data/theme';
 
@@ -39,20 +40,21 @@ export default function ArtworkDetailScreen() {
     );
   }
 
-  // Native AR: download USDZ locally, then open with Quick Look
+  // Native AR: download USDZ locally, then share → Quick Look
   const handleARPress = async () => {
     if (Platform.OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       const usdzUrl = `https://preview.jirihauschka.com${artwork.usdz}`;
       const localUri = `${FileSystem.cacheDirectory}${artwork.slug}.usdz`;
-      const download = await FileSystem.downloadAsync(usdzUrl, localUri);
-      if (download.uri) {
-        await Linking.openURL(download.uri);
+      const { uri } = await FileSystem.downloadAsync(usdzUrl, localUri);
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, { UTI: 'model/usd' });
+      } else {
+        Linking.openURL(uri).catch(() => {});
       }
     } catch (err) {
-      // Fallback: try opening directly
-      const usdzUrl = `https://preview.jirihauschka.com${artwork.usdz}`;
-      Linking.openURL(usdzUrl).catch(() => {});
+      // Fallback: direct URL
+      Linking.openURL(`https://preview.jirihauschka.com${artwork.usdz}`).catch(() => {});
     }
   };
 
