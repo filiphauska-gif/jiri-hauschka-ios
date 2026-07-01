@@ -4,13 +4,9 @@ import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../data/theme';
 
-function TabIcon({ name, color, size }) {
-  const iconMap = {
-    'works': 'images-outline',
-    'about': 'person-outline',
-    'exhibitions': 'calendar-outline',
-  };
-  return <Ionicons name={iconMap[name] || 'ellipse'} size={size} color={color} />;
+function TabIcon({ name, color }) {
+  const icons = { works: 'images-outline', about: 'person-outline', exhibitions: 'calendar-outline' };
+  return <Ionicons name={icons[name] || 'ellipse'} size={24} color={color} />;
 }
 
 export default function TabLayout() {
@@ -21,62 +17,22 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: colors.tabIconSelected,
         tabBarInactiveTintColor: colors.tabIconDefault,
-        tabBarShowLabel: true,
-        tabBarLabelStyle: styles.tabLabel,
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '600', marginTop: -2 },
         ...(Platform.OS === 'ios'
           ? {
-              tabBarStyle: styles.tabBar,
-              tabBarBackground: () => (
-                <BlurView tint="systemChromeMaterial" intensity={100} style={StyleSheet.absoluteFill} />
-              ),
+              tabBarStyle: { position: 'absolute', borderTopWidth: 0, elevation: 0, backgroundColor: 'transparent' },
+              tabBarBackground: () => <BlurView tint="systemChromeMaterial" intensity={100} style={StyleSheet.absoluteFill} />,
             }
-          : {
-              tabBarStyle: {
-                backgroundColor: colors.card,
-                borderTopColor: colors.separator,
-              },
-            }),
-        headerStyle: { backgroundColor: colors.background },
+          : { tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.separator } }),
+        headerStyle: { backgroundColor: colors.bg },
         headerTintColor: colors.text,
         headerTitleStyle: { fontWeight: '600', fontSize: 17 },
         headerShadowVisible: false,
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Works',
-          tabBarIcon: ({ color, size }) => <TabIcon name="works" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="about"
-        options={{
-          title: 'About',
-          tabBarIcon: ({ color, size }) => <TabIcon name="about" color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="exhibitions"
-        options={{
-          title: 'Exhibitions',
-          tabBarIcon: ({ color, size }) => <TabIcon name="exhibitions" color={color} size={size} />,
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: 'Works', tabBarIcon: ({ color }) => <TabIcon name="works" color={color} /> }} />
+      <Tabs.Screen name="about" options={{ title: 'About', tabBarIcon: ({ color }) => <TabIcon name="about" color={color} /> }} />
+      <Tabs.Screen name="exhibitions" options={{ title: 'Exhibitions', tabBarIcon: ({ color }) => <TabIcon name="exhibitions" color={color} /> }} />
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBar: {
-    position: 'absolute',
-    borderTopWidth: 0,
-    elevation: 0,
-    backgroundColor: 'transparent',
-  },
-  tabLabel: {
-    fontSize: 10,
-    fontWeight: '500',
-    marginTop: -2,
-  },
-});
